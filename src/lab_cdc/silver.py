@@ -32,7 +32,7 @@ def criar_silver(spark, tabela: str) -> None:
             id_loja INT, nome STRING, segmento STRING, atualizado_em STRING,
             _lsn_ordem BIGINT COMMENT 'posição no log do último evento aplicado',
             _atualizado_silver TIMESTAMP
-        )
+        ) USING DELTA
     """)
 
 
