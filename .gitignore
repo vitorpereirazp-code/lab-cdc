@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Segredos: nunca versionar
+.env
+*.pem
+.aws/
+terraform.tfstate*
+.terraform/
+
+# Sistema e editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: lab-cdc-postgres
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab
+      POSTGRES_DB: origem
+    # 127.0.0.1: só a sua máquina acessa. Nunca exponha este banco na rede.
+    ports: ["127.0.0.1:5432:5432"]
+    # estas três linhas são o coração do laboratório
+    command: >
+      postgres
+      -c wal_level=logical
+      -c max_replication_slots=4
+      -c max_wal_senders=4
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

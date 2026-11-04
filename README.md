@@ -1,8 +1,42 @@
 # lab-cdc
 
-Laboratório de CDC em casa (PDI, item 2.9): uma réplica reduzida da
-arquitetura de ingestão da Webmotors. Objetivo: ver um DELETE atravessar
-o pipeline inteiro, lendo o log do banco, sem consultar a tabela.
+[![ci](https://github.com/vitorpereirazp-code/lab-cdc/actions/workflows/ci.yml/badge.svg)](https://github.com/vitorpereirazp-code/lab-cdc/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![PostgreSQL](https://img.shields.io/badge/postgres-logical%20replication-336791)
+
+Laboratório de **Change Data Capture (CDC)** por log: uma réplica reduzida de uma
+arquitetura de ingestão real. O objetivo é ver um `DELETE` atravessar o pipeline
+inteiro, lendo o log do banco, sem consultar a tabela.
+
+```mermaid
+flowchart LR
+    A[(Postgres<br/>wal_level=logical)] -->|slot de replicação| B[capture.py<br/>peek → evento]
+    B -->|append-only| C[(Landing S3)]
+    C -->|Auto Loader| D[Bronze]
+    D -->|MERGE idempotente| E[Silver]
+    F[Airflow] -.orquestra.-> B
+```
+
+## Estrutura
+
+```
+lab-cdc/
+├── .github/workflows/ci.yml   # lint + testes a cada push
+├── infra/                     # banco de origem (Docker) e scripts SQL das etapas 1-2
+├── src/lab_cdc/               # captura: lê o slot e gera eventos estruturados
+└── tests/                     # unitários (sem banco) e integração (com banco)
+```
+
+## Status
+
+| Etapa | O que faz | Status |
+|---|---|---|
+| 1 | Origem transacional com replicação lógica | ✅ |
+| 2 | Ler o log cru (`peek` vs `get`) | ✅ |
+| 3 | Captura em Python com testes | ✅ |
+| 4 | Landing em S3 com IAM de menor privilégio | ⏳ |
+| 5 | Bronze e silver no Databricks (Auto Loader + MERGE) | ⏳ |
+| 6 | Orquestração com Airflow | ⏳ |
 
 ## Etapa 1 · Origem transacional (~1h)
 
