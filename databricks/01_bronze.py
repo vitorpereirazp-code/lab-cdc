@@ -7,13 +7,14 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text("catalogo", "workspace")
+dbutils.widgets.text("catalogo", "lab_cdc")
 catalogo = dbutils.widgets.get("catalogo")
 
 landing = f"/Volumes/{catalogo}/bronze/landing/loja/"
 checkpoints = f"/Volumes/{catalogo}/bronze/landing/_checkpoints/bronze_loja"
 tabela_bronze = f"{catalogo}.bronze.loja_eventos"
 
+spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalogo}.bronze")
 spark.sql(f"CREATE VOLUME IF NOT EXISTS {catalogo}.bronze.landing")
 
 # COMMAND ----------

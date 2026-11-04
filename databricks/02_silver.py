@@ -13,13 +13,14 @@ import sys
 sys.path.append(os.path.abspath("../src"))
 from lab_cdc.silver import aplicar_lote, criar_silver
 
-dbutils.widgets.text("catalogo", "workspace")
+dbutils.widgets.text("catalogo", "lab_cdc")
 catalogo = dbutils.widgets.get("catalogo")
 
 tabela_bronze = f"{catalogo}.bronze.loja_eventos"
 tabela_silver = f"{catalogo}.silver.loja"
 checkpoints = f"/Volumes/{catalogo}/bronze/landing/_checkpoints/silver_loja"
 
+spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalogo}.silver")
 criar_silver(spark, tabela_silver)
 
 # COMMAND ----------

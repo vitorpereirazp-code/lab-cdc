@@ -106,7 +106,7 @@ uv run python -m lab_cdc --gravar landing
 Envie a pasta para o Volume do Databricks (o notebook 01 cria o Volume na primeira execução):
 
 ```powershell
-databricks fs cp -r landing/loja dbfs:/Volumes/workspace/bronze/landing/loja --overwrite --profile lab
+databricks fs cp -r landing/loja dbfs:/Volumes/lab_cdc/bronze/landing/loja --overwrite --profile lab
 ```
 
 Por enquanto a landing é um Volume. Quando a AWS estiver pronta, o destino vira um bucket S3
