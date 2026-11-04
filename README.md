@@ -112,6 +112,19 @@ databricks fs cp -r landing/loja dbfs:/Volumes/lab_cdc/bronze/landing/loja --ove
 Por enquanto a landing é um Volume. Quando a AWS estiver pronta, o destino vira um bucket S3
 e o formato continua igual.
 
+## Etapa 4b · Ponte S3 → Volume (~15 min)
+
+O Free Edition não permite *external location*, então o Databricks não lê o bucket direto.
+Este passo copia para o Volume só os arquivos do S3 que ainda não estão lá:
+
+```powershell
+uv run python -m lab_cdc --s3 lab-cdc-vitor-2026      # Postgres -> S3
+uv run python -m lab_cdc.replicar --bucket lab-cdc-vitor-2026   # S3 -> Volume
+```
+
+Rodar a réplica duas vezes não copia nada de novo. Numa conta paga, este passo some: o
+Auto Loader leria `s3://` direto.
+
 ## Etapa 5 · Bronze e silver (~1h)
 
 1. No Databricks: **Workspace → Create → Git folder**, com a URL deste repositório.

@@ -5,11 +5,16 @@ description = "Laboratório de CDC em casa: origem transacional, captura por log
 requires-python = ">=3.11"
 dependencies = [
     "boto3>=1.43.123",
+    "databricks-sdk>=0.161.0",
     "psycopg[binary]>=3.2",
 ]
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = [
+    "moto[s3]>=5",
+    "pytest>=8",
+    "ruff>=0.6",
+]
 spark = ["pyspark==3.5.3", "delta-spark==3.2.1"]
 
 [build-system]
