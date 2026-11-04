@@ -23,7 +23,8 @@ flowchart LR
 lab-cdc/
 ├── .github/workflows/ci.yml   # lint + testes a cada push
 ├── infra/                     # banco de origem (Docker) e scripts SQL das etapas 1-2
-├── src/lab_cdc/               # captura: lê o slot e gera eventos estruturados
+├── databricks/                # notebooks: 01_bronze (Auto Loader) e 02_silver (MERGE)
+├── src/lab_cdc/               # captura, landing e lógica da silver
 └── tests/                     # unitários (sem banco) e integração (com banco)
 ```
 
@@ -34,8 +35,8 @@ lab-cdc/
 | 1 | Origem transacional com replicação lógica | ✅ |
 | 2 | Ler o log cru (`peek` vs `get`) | ✅ |
 | 3 | Captura em Python com testes | ✅ |
-| 4 | Landing em S3 com IAM de menor privilégio | ⏳ |
-| 5 | Bronze e silver no Databricks (Auto Loader + MERGE) | ⏳ |
+| 4 | Landing (Volume do Databricks agora, S3 depois) | ✅ |
+| 5 | Bronze e silver no Databricks (Auto Loader + MERGE) | ✅ |
 | 6 | Orquestração com Airflow | ⏳ |
 
 ## Etapa 1 · Origem transacional (~1h)
@@ -94,11 +95,39 @@ Checkpoint:
 - [ ] você sabe explicar por que `confirmar` vem depois de gravar, e não antes
 - [ ] o CI do GitHub Actions ficou verde no primeiro push
 
+## Etapa 4 · Landing (~30 min)
+
+Grava os eventos como JSON Lines, particionados por data e hora, e só depois avança o slot:
+
+```powershell
+uv run python -m lab_cdc --gravar landing
+```
+
+Envie a pasta para o Volume do Databricks (o notebook 01 cria o Volume na primeira execução):
+
+```powershell
+databricks fs cp -r landing/loja dbfs:/Volumes/workspace/bronze/landing/loja --overwrite --profile lab
+```
+
+Por enquanto a landing é um Volume. Quando a AWS estiver pronta, o destino vira um bucket S3
+e o formato continua igual.
+
+## Etapa 5 · Bronze e silver (~1h)
+
+1. No Databricks: **Workspace → Create → Git folder**, com a URL deste repositório.
+2. Rode `databricks/01_bronze` uma vez (cria o Volume) e envie a landing (Etapa 4).
+3. Rode `01_bronze` de novo: o Auto Loader lê só os arquivos novos.
+4. Rode `databricks/02_silver`: o MERGE aplica os eventos em ordem de LSN.
+
+Prova do delete: a loja 2 não pode existir na silver, e a loja 1 tem que estar como PF.
+
+O MERGE é idempotente: reprocessar o mesmo lote não muda nada, e um evento mais antigo que o
+estado atual é ignorado. Os testes em `tests/test_silver.py` rodam no CI com Spark e Delta.
+
 ## Próximas etapas
 
-4. Landing em S3 (só depois do alerta de billing na AWS)
-5. Bronze e silver no Databricks Free (Auto Loader + MERGE)
 6. Orquestração com Airflow
+7. Trocar a landing por S3 com IAM de menor privilégio
 
 ## Regras
 

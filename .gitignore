@@ -17,3 +17,4 @@ terraform.tfstate*
 Thumbs.db
 .idea/
 .vscode/
+landing/

@@ -16,5 +16,20 @@ jobs:
       - run: uv sync
       - name: Lint
         run: uv run ruff check .
-      - name: Testes (os de integração ficam pulados sem banco)
+      - name: Testes unitários (integração e Spark ficam pulados)
         run: uv run pytest -v
+
+  silver-spark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --group spark
+      - name: MERGE da silver com Spark e Delta
+        run: uv run pytest tests/test_silver.py -v

@@ -7,6 +7,7 @@ dependencies = ["psycopg[binary]>=3.2"]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]
+spark = ["pyspark==3.5.3", "delta-spark==3.2.1"]
 
 [build-system]
 requires = ["hatchling"]
@@ -21,6 +22,8 @@ testpaths = ["tests"]
 markers = ["integration: precisa de um Postgres ligado (defina LAB_CDC_INTEGRACAO=1)"]
 
 [tool.ruff]
+extend-exclude = ["databricks"]  # notebooks usam spark/dbutils globais do Databricks
+
 line-length = 100
 
 [tool.ruff.lint]
