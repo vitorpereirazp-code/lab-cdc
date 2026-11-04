@@ -3,7 +3,10 @@ name = "lab-cdc"
 version = "0.1.0"
 description = "Laboratório de CDC em casa: origem transacional, captura por log, landing e bronze/silver."
 requires-python = ">=3.11"
-dependencies = ["psycopg[binary]>=3.2"]
+dependencies = [
+    "boto3>=1.43.123",
+    "psycopg[binary]>=3.2",
+]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]

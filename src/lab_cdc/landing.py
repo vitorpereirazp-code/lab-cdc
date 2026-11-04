@@ -49,3 +49,16 @@ def gravar(eventos: list[EventoCDC], raiz: Path, agora: datetime | None = None) 
     tmp.write_text("\n".join(para_linha(e) for e in eventos) + "\n", encoding="utf-8")
     tmp.replace(arquivo)  # troca atômica: nunca fica um arquivo pela metade
     return arquivo
+def gravar_s3(eventos: list[EventoCDC], s3, bucket: str, prefixo: str = "landing",
+              agora: datetime | None = None) -> str | None:
+    """Mesma regra da landing local, só que no S3: chave particionada por data e hora,
+    com o LSN no nome. Regravar o mesmo lote sobrescreve o objeto, não duplica."""
+    if not eventos:
+        return None
+    agora = agora or datetime.now(UTC)
+    tabela = eventos[0].tabela.split(".")[-1]
+    chave = (f"{prefixo}/{tabela}/dt={agora:%Y-%m-%d}/hora={agora:%H}/"
+             f"eventos-{eventos[0].lsn.replace('/', '_')}.json")
+    corpo = "\n".join(para_linha(e) for e in eventos) + "\n"
+    s3.put_object(Bucket=bucket, Key=chave, Body=corpo.encode("utf-8"))
+    return f"s3://{bucket}/{chave}"
