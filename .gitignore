@@ -19,3 +19,6 @@ Thumbs.db
 .vscode/
 landing/
 ambiente.ps1
+
+# estado local do Asset Bundle
+.databricks/

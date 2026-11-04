@@ -1,0 +1,33 @@
+# Asset Bundle do laboratório: o job bronze -> silver como código.
+# Deploy: databricks bundle deploy -t <alvo> --profile lab
+bundle:
+  name: lab-cdc
+
+include:
+  - resources/*.yml
+
+variables:
+  catalogo:
+    description: Catálogo do Unity Catalog onde ficam bronze, silver e o Volume da landing.
+    default: lab_cdc
+  gatilho:
+    description: Estado do gatilho por chegada de arquivo. Só fica ligado no prd.
+    default: PAUSED
+
+targets:
+  # dev: para experimentar. O nome do job ganha o prefixo "[dev vitor]" e o gatilho
+  # fica PAUSADO, então nada roda sozinho. Você dispara com "bundle run".
+  dev:
+    default: true
+    mode: development
+    workspace:
+      host: https://dbc-bc4efd5d-e814.cloud.databricks.com
+
+  # prd: o job de verdade, com o gatilho ligado. Só deve ser publicado a partir da main.
+  prd:
+    mode: production
+    workspace:
+      host: https://dbc-bc4efd5d-e814.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      gatilho: UNPAUSED

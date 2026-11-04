@@ -137,6 +137,26 @@ Prova do delete: a loja 2 não pode existir na silver, e a loja 1 tem que estar 
 O MERGE é idempotente: reprocessar o mesmo lote não muda nada, e um evento mais antigo que o
 estado atual é ignorado. Os testes em `tests/test_silver.py` rodam no CI com Spark e Delta.
 
+## Etapa 7a · Job bronze → silver como código (Asset Bundle)
+
+O job fica descrito em `databricks.yml` e `resources/pipeline_loja.job.yml`: duas tarefas
+(`bronze` e depois `silver`), disparadas quando chega arquivo novo na landing.
+
+| Alvo | Nome do job | Gatilho | Para quê |
+|---|---|---|---|
+| `dev` | `[dev <você>] lab-cdc-pipeline-loja` | pausado | testar mudanças sem afetar nada |
+| `prd` | `lab-cdc-pipeline-loja` | ligado | o pipeline de verdade |
+
+```powershell
+databricks bundle validate --strict -t dev --profile lab   # confere tudo, não muda nada
+databricks bundle deploy -t dev --profile lab              # publica o job de teste
+databricks bundle run pipeline_loja -t dev --profile lab   # roda uma vez, na hora
+databricks bundle deploy -t prd --profile lab              # publica o job real
+```
+
+Com o `prd` publicado, o fluxo fica: `--s3` → `replicar` → o arquivo chega ao Volume →
+o job dispara sozinho em cerca de 1 minuto.
+
 ## Próximas etapas
 
 6. Orquestração com Airflow
