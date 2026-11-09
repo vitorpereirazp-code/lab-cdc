@@ -1,0 +1,28 @@
+bundle:
+  name: lab-cdc
+
+include:
+  - resources/*.yml
+
+variables:
+  catalogo:
+    description: Catálogo onde ficam bronze, silver e o Volume da landing.
+    default: lab_cdc
+  gatilho:
+    description: Estado do gatilho por chegada de arquivo. Só fica ligado no prd.
+    default: PAUSED
+
+targets:
+  dev:
+    default: true
+    mode: development
+    workspace:
+      host: https://dbc-bc4efd5d-e814.cloud.databricks.com
+
+  prd:
+    mode: production
+    workspace:
+      host: https://dbc-bc4efd5d-e814.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      gatilho: UNPAUSED

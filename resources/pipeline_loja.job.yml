@@ -1,0 +1,37 @@
+resources:
+  jobs:
+    pipeline_loja:
+      name: lab-cdc-pipeline-loja
+      description: Lê a landing (Auto Loader) para a bronze e aplica o MERGE na silver.
+      max_concurrent_runs: 1
+      timeout_seconds: 1800
+
+      trigger:
+        pause_status: ${var.gatilho}
+        file_arrival:
+          url: /Volumes/${var.catalogo}/bronze/landing/loja/
+          min_time_between_triggers_seconds: 60
+          wait_after_last_change_seconds: 60
+
+      email_notifications:
+        on_failure:
+          - ${workspace.current_user.userName}
+
+      parameters:
+        - name: catalogo
+          default: ${var.catalogo}
+
+      tasks:
+        - task_key: bronze
+          notebook_task:
+            notebook_path: ../databricks/01_bronze.py
+          max_retries: 1
+          min_retry_interval_millis: 60000
+
+        - task_key: silver
+          depends_on:
+            - task_key: bronze
+          notebook_task:
+            notebook_path: ../databricks/02_silver.py
+          max_retries: 1
+          min_retry_interval_millis: 60000
