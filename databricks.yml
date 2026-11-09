@@ -1,0 +1,12 @@
+bundle:
+  name: lab-cdc
+
+include:
+  - resources/*.yml
+
+targets:
+  dev:
+    default: true
+    mode: development
+    workspace:
+      host: https://dbc-bc4efd5d-e814.cloud.databricks.com

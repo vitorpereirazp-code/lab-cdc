@@ -1,0 +1,19 @@
+resources:
+  jobs:
+    pipeline_loja:
+      name: lab-cdc-pipeline-loja
+
+      parameters:
+        - name: catalogo
+          default: lab_cdc
+
+      tasks:
+        - task_key: bronze
+          notebook_task:
+            notebook_path: ../databricks/01_bronze.py
+
+        - task_key: silver
+          depends_on:
+            - task_key: bronze
+          notebook_task:
+            notebook_path: ../databricks/02_silver.py
