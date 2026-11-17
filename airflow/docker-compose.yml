@@ -1,0 +1,39 @@
+# Sobe o Airflow em modo standalone: servidor web, scheduler e processador de DAGs
+# num container só. Bom para laboratório; em produção, cada um roda separado.
+#
+#   cd airflow
+#   docker compose up -d --build
+#   abra http://localhost:8080
+services:
+  airflow:
+    build: .
+    container_name: lab-cdc-airflow
+    command: standalone
+    # 127.0.0.1: só o seu PC acessa a tela do Airflow, nunca a rede.
+    ports:
+      - "127.0.0.1:8080:8080"
+    env_file: .env   # segredos: senha do Postgres e token do Databricks (fora do Git)
+    environment:
+      # --- Airflow ---
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      # sem tela de login: aceitável porque a porta só abre para o seu PC
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/estado/airflow.db
+      # --- código do laboratório ---
+      PYTHONPATH: /opt/lab-cdc/src
+      LAB_CDC_SLOT: slot_lab
+      LAB_CDC_BUCKET: lab-cdc-vitor-2026
+      # --- Postgres do Windows, visto de dentro do container ---
+      PGHOST: host.docker.internal
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGDATABASE: postgres
+      # --- AWS: usa o mesmo perfil do seu PC, lido da pasta .aws montada abaixo ---
+      AWS_PROFILE: lab-cdc
+    volumes:
+      - ./dags:/opt/airflow/dags                      # as DAGs
+      - ../src:/opt/lab-cdc/src:ro                    # o código do lab_cdc, só leitura
+      - ${USERPROFILE:-~}/.aws:/home/airflow/.aws:ro  # credenciais AWS, só leitura
+      - estado:/opt/airflow/estado                    # banco interno do Airflow
+volumes:
+  estado:

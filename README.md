@@ -37,7 +37,7 @@ lab-cdc/
 | 3 | Captura em Python com testes | ✅ |
 | 4 | Landing (Volume do Databricks agora, S3 depois) | ✅ |
 | 5 | Bronze e silver no Databricks (Auto Loader + MERGE) | ✅ |
-| 6 | Orquestração com Airflow | ⏳ |
+| 6 | Orquestração com Airflow | ✅ |
 
 ## Etapa 1 · Origem transacional (~1h)
 
@@ -137,10 +137,39 @@ Prova do delete: a loja 2 não pode existir na silver, e a loja 1 tem que estar 
 O MERGE é idempotente: reprocessar o mesmo lote não muda nada, e um evento mais antigo que o
 estado atual é ignorado. Os testes em `tests/test_silver.py` rodam no CI com Spark e Delta.
 
+## Etapa 6 · Airflow orquestrando captura e réplica
+
+A DAG `lab_cdc_ingestao` roda a cada 15 minutos, em Docker, no seu PC:
+
+```
+capturar (Postgres -> S3)  ->  replicar (S3 -> Volume)  ->  o job do Databricks dispara sozinho
+```
+
+| Proteção | Por quê |
+|---|---|
+| `catchup=False` | Ao ligar, não reexecuta os ciclos passados: o slot já guarda o atraso inteiro |
+| `max_active_runs=1` | Duas execuções lendo o mesmo slot poderiam gravar o mesmo evento duas vezes |
+| `retries=2`, a cada 2 min | Falha passageira (rede, Postgres reiniciando) se recupera sozinha |
+| `replicar` roda mesmo sem eventos | Recupera um arquivo que ficou para trás num ciclo anterior |
+
+**Como subir (uma vez):**
+
+1. Crie um token no Databricks: avatar → **Settings → Developer → Access tokens → Generate**, com validade de 90 dias.
+2. Copie `airflow/.env.example` para `airflow/.env` e preencha a senha do Postgres e o token. O `.env` está no `.gitignore`.
+3. Suba:
+   ```powershell
+   cd airflow
+   docker compose up -d --build
+   ```
+4. Abra http://localhost:8080 e ligue a DAG `lab_cdc_ingestao` (botão de pausa).
+
+O código de `src/` é montado no container: mudou o código, vale no próximo ciclo, sem reconstruir.
+Para parar: `docker compose down` (o histórico do Airflow fica guardado no volume `estado`).
+
 ## Próximas etapas
 
-6. Orquestração com Airflow
-7. Trocar a landing por S3 com IAM de menor privilégio
+Exercícios de consolidação: SCD tipo 2 na silver, backfill a partir da landing e
+`timestamptz` na origem.
 
 ## Regras
 
